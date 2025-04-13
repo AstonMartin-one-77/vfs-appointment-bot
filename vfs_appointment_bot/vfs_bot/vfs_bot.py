@@ -7,6 +7,8 @@ import playwright
 from playwright.sync_api import sync_playwright
 from playwright_stealth import stealth_sync
 
+from twocaptcha import TwoCaptcha
+
 from vfs_appointment_bot.utils.config_reader import get_config_value
 from vfs_appointment_bot.notification.notification_client_factory import (
     get_notification_client,
@@ -72,14 +74,68 @@ class VfsBot(ABC):
         # Launch browser and perform actions
         with sync_playwright() as p:
             browser = getattr(p, browser_type).launch(
-                headless=headless_mode in ("True", "true")
+                headless=False,
+                args=["--start-maximized"]
             )
+
+            # context = browser.new_context(
+            # user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            # locale="en-US"
+            # )
+            # context.add_init_script("""Object.defineProperty(navigator, 'webdriver', {get: () => undefined})""")
+
             page = browser.new_page()
-            stealth_sync(page)
+            logging.info("New page created")
+
+            
+            # stealth_sync(page)
+            # page.add_init_script("window.opts = {};")
+
+            # page.on("console", lambda msg: print(f"Console log: {msg.type}: {msg.text}"))
+
+            # logging.info("Trying 2Captcha API")
+            # captcha_api_key = get_config_value("captcha", "api_key")
+            # solver = TwoCaptcha(captcha_api_key)
+            # result = solver.turnstile(sitekey='0x4AAAAAAACYaM3U_Dz-4DN1', url=vfs_url)
+
+            # logging.info("2Captcha API result")
+            # logging.info(result)
+
+            # captcha_token = result['code']
+            # logging.info("Captcha token received successfully")
 
             page.goto(vfs_url)
+
+            page.wait_for_selector('div[appcloudflarerecaptcha]', timeout=300000)
+            logging.info("Cloudflare challenge detected")
+
+            # page.wait_for_timeout(500)
+
+            # logging.info("Waiting for captcha token selector")
+            # page.wait_for_selector('[name="cf-turnstile-response"]')
+            # logging.info("Captcha token selector found")
+
+            # page.evaluate(f'document.getElementsByName("cf-turnstile-response")[0].value="{captcha_token}";')
+            # logging.info("Cloudflare Captcha token set!!")
+
+            # page.wait_for_timeout(8000)
+            # page.wait_for_selector('[name="cf-turnstile-response"]')
+            # logging.info("Captcha token selector found")
+
+            # if result and 'code' in result:
+            #     captcha_token = result['code']
+            #     # logging.info("captcha_token: ", captcha_token)
+            #     page.evaluate(f'document.getElementsByName("cf-turnstile-response")[0].value="{captcha_token}";')
+            #     logging.info("Captcha token set")
+          
+            page.wait_for_timeout(5000)
+
+            logging.info("Trying pre login steps")
             self.pre_login_steps(page)
 
+            page.wait_for_timeout(5000)
+
+            logging.info("Trying login")
             try:
                 self.login(page, email_id, password)
                 logging.info("Logged in successfully")

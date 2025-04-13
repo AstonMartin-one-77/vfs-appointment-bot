@@ -32,3 +32,8 @@ app.log
 # Local Config
 config.ini
 *.ini
+
+vfs-user-data/
+__pycache__/
+
+.DS_Store
