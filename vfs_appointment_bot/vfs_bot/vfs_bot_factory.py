@@ -29,6 +29,9 @@ def get_vfs_bot(source_country_code: str, destination_country_code: str) -> VfsB
         from .vfs_bot_de import VfsBotDe
 
         return VfsBotDe(source_country_code)
+    elif source_country_code == "GB" and destination_country_code == "IT":
+        from .vfs_bot_uk2it import VfsBotUk2It
+        return VfsBotUk2It(source_country_code)
     elif country_lower == "IT":
         from .vfs_bot_it import VfsBotIt
 
